@@ -22,16 +22,19 @@
             background: transparent;
         }
     </style>
+    <link rel="stylesheet" type="text/css" href="/stylesheets/progressbar.css">
+    <link rel="stylesheet" type="text/css" href="/stylesheets/mp3.css">
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"
         integrity="sha384-/KNQL8Nu5gCHLqwqfQjA689Hhoqgi2S84SNUxC3roTe4EhJ9AfLkp8QiQcU8AMzI"
         crossorigin="anonymous"></script>
+    <script src="/js/mp3.js"></script>
 </head>
 
 <body>
     <div id="banner">
         <div class="container-fluid">
             <div class="jumbotron text-center">
-                <h3>Vedic YouTube Audio Downloader</h3>
+                <h3>Video YouTube Audio Downloader</h3>
             </div>
             <div class="row">
                 <div class="col-md-4 offset-md-4">
@@ -42,16 +45,43 @@
                     <div class="form-group text-center">
                         <!-- <input id="submitBtn" class="btn btn-primary" type="submit" onclick="download(event);" value="Download" /> -->
                         <input id="submitBtn" class="btn btn-primary" type="submit" value="Download" />
-                        <p id="progress">0%</p>
                     </div>
+                    <div class="progress-bar" id="progress-bar" data-status="0%" aria-label="Progress bar."
+                        style="display: none;"></div>
+
+
+                    <div class="audio-player" id="audio-player" style="display: none;">
+                        <!-- <div id="play-btn"></div> -->
+                        <div class="audio-wrapper" id="player-container" href="javascript:;">
+                            <audio id="player" ontimeupdate="initProgressBar()">
+                                <source src="http://www.lukeduncan.co/oslo.mp3" type="audio/mp3">
+                            </audio>
+                        </div>
+                        <div class="player-controls scrubber">
+                            <p id="mp3Title">Title</p>
+                            <!-- <span id="seekObjContainer">
+                                <progress id="seekObj" value="0" max="1"></progress>
+                            </span>
+                            <br>
+                            <small style="float: left; position: relative; left: 15px;" class="start-time"></small>
+                            <small style="float: right; position: relative; right: 20px;" class="end-time"></small> -->
+
+                        </div>
+                        <div id="album-image" class="album-image"
+                            style="background-image: url('https://artwork-cdn.7static.com/static/img/sleeveart/00/051/614/0005161476_350.jpg')">
+                        </div>
+                    </div>
+
                     <!-- </form> -->
                 </div>
             </div>
         </div>
     </div>
     <script type="text/javascript">
-        const progressEl = document.getElementById("progress");
-        // progressEl.style.display = "none";
+        const progressBar = document.getElementById("progress-bar");
+        const audioEl = document.getElementById("audio-player");
+        const mp3TitleEl = document.getElementById("mp3Title");
+        const submitEl = document.getElementById("submitBtn");
 
         const socket = io();
         let socketid = "";
@@ -59,8 +89,33 @@
         socket.on("connect", () => {
             socketid = socket.id
         });
-        socket.on("progress", (downloaded) => {
-            progressEl.innerHTML = downloaded + "%";
+        socket.on("progress", (downloaded, title, thumbnailUrl, mp3File) => {
+            if (downloaded === 100 && title !== "") {
+                progressBar.style.display = "none";
+
+                audioEl.style.display = "block";
+
+                let playerEl = document.getElementById("player");
+                // let songPath = "/static/mp3/" + title;
+                // console.log("songPath:  ", songPath);
+                playerEl.firstElementChild.setAttribute("src", mp3File);
+
+                mp3TitleEl.innerHTML = title;
+
+                const albumImageEl = document.getElementById("album-image");
+                console.log("thumbnailUrl:  ", thumbnailUrl);
+                albumImageEl.style.backgroundImage = `url(${thumbnailUrl})`;
+
+                submitEl.disabled = false;
+            }
+            else {
+                progressBar.style.display = "block";
+                progressBar.dataset.status = downloaded + "%";
+                progressBar.setAttribute(
+                    "style",
+                    `--__progress-bar__status_wh: ${downloaded}%;`
+                );
+            }
         });
 
         $('#submitBtn').click((e) => {
@@ -68,27 +123,23 @@
             let url = $(".form-group .form-control").val();
             console.log("valueee:   =>>>>>>>>>>>>>>>>>>   ", url);
 
-            // if (url === "") {
-            //     alert("Please Enter a url first!");
-            // }
-            // else {
-                // progressEl.style.display = "block";
-
-                $.ajax({
-                    url: "/api/v1/ytdownload",
-                    type: 'POST',
-                    cache: false,
-                    data: { url: url, socketid: socketid },
-                    success: function (data) {
-                        console.log('Success!')
-                    }
-                    , error: function (jqXHR, textStatus, err) {
-                        console.log('err status ' + textStatus + ', err ' + err)
-                    }
-                })
-            // }
+            $.ajax({
+                url: "/api/v1/ytdownload",
+                type: 'POST',
+                cache: false,
+                data: { url: url, socketid: socketid },
+                success: function (data) {
+                    console.log('Success!')
+                }
+                , error: function (jqXHR, textStatus, err) {
+                    console.log('err status ' + textStatus + ', err ' + err)
+                }
+            })
+            
+            submitEl.disabled = true;
         });
     </script>
+
 </body>
 
 </html>

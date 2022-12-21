@@ -3,12 +3,19 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
-const ytdl = require('ytdl-core');
-const readline = require('readline');
-const ffmpeg = require('fluent-ffmpeg');
-var indexRouter = require('./routes/index');
-
 var app = express();
+
+var indexRouter = require('./routes/index');
+// var googleDriveRouter = require('./routes/googledrive');
+
+// require("./googledrive");
+// const scanFolderForFiles = require('./upload');
+
+// let mp3FolderPath = path.join(__dirname, "public", "static", "mp3");
+// console.log("mp3FolderPath:  ", mp3FolderPath);
+// scanFolderForFiles(mp3FolderPath).then(() => {
+//   console.log('🔥 All files have been uploaded to Google Drive successfully!');
+// });
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -21,31 +28,10 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/api/v1/ytdownload', indexRouter);
+// app.use('/api/v1/drive', googleDriveRouter);
 
 app.get('/', (req, res) => {
   res.render('index');
-});
-
-app.get('/download', (req, res) => {
-  var url = req.query.url;    
-
-  const stream = ytdl(url, {
-      quality: 'highestaudio',
-  });
-  
-  let start = Date.now();
-
-  ffmpeg(stream)
-  .audioBitrate(128)
-  .save(`static/audio1.mp3`)
-  .on('progress', p => {
-      readline.cursorTo(process.stdout, 0);
-      process.stdout.write(`${p.targetSize}kb downloaded`);
-  })
-  .on('end', () => {
-      console.log(`\ndone, thanks - ${(Date.now() - start) / 1000}s`);
-      res.redirect('/');
-  });
 });
 
 // catch 404 and forward to error handler
