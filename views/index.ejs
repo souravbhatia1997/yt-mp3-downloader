@@ -22,6 +22,9 @@
             background: transparent;
         }
     </style>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"
+        integrity="sha384-/KNQL8Nu5gCHLqwqfQjA689Hhoqgi2S84SNUxC3roTe4EhJ9AfLkp8QiQcU8AMzI"
+        crossorigin="anonymous"></script>
 </head>
 
 <body>
@@ -39,6 +42,7 @@
                     <div class="form-group text-center">
                         <!-- <input id="submitBtn" class="btn btn-primary" type="submit" onclick="download(event);" value="Download" /> -->
                         <input id="submitBtn" class="btn btn-primary" type="submit" value="Download" />
+                        <p id="progress">0%</p>
                     </div>
                     <!-- </form> -->
                 </div>
@@ -46,26 +50,44 @@
         </div>
     </div>
     <script type="text/javascript">
+        const progressEl = document.getElementById("progress");
+        // progressEl.style.display = "none";
+
+        const socket = io();
+        let socketid = "";
+
+        socket.on("connect", () => {
+            socketid = socket.id
+        });
+        socket.on("progress", (downloaded) => {
+            progressEl.innerHTML = downloaded + "%";
+        });
+
         $('#submitBtn').click((e) => {
             e.preventDefault();
             let url = $(".form-group .form-control").val();
             console.log("valueee:   =>>>>>>>>>>>>>>>>>>   ", url);
 
-            $.ajax({
-                // url: '/download',
-                url: "/api/v1/ytdownload",
-                type: 'POST',
-                cache: false,
-                data: { url: url },
-                success: function (data) {
-                    console.log('Success!')
-                }
-                , error: function (jqXHR, textStatus, err) {
-                    console.log('err status ' + textStatus + ', err ' + err)
-                }
-            })
-        });
+            // if (url === "") {
+            //     alert("Please Enter a url first!");
+            // }
+            // else {
+                // progressEl.style.display = "block";
 
+                $.ajax({
+                    url: "/api/v1/ytdownload",
+                    type: 'POST',
+                    cache: false,
+                    data: { url: url, socketid: socketid },
+                    success: function (data) {
+                        console.log('Success!')
+                    }
+                    , error: function (jqXHR, textStatus, err) {
+                        console.log('err status ' + textStatus + ', err ' + err)
+                    }
+                })
+            // }
+        });
     </script>
 </body>
 

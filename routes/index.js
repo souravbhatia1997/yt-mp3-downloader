@@ -1,16 +1,16 @@
 const express = require('express');
+var router = express.Router();
 const path = require('path');
 const YoutubeMp3Downloader = require('youtube-mp3-downloader');
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const ffmpeg = require('fluent-ffmpeg');
 ffmpeg.setFfmpegPath(ffmpegPath);
-var router = express.Router();
 
 router.post('/', (req, res) => {
-  let payloadData = req.body;
   let queryPattern = /\?/;
-  console.log('payloadData:  ', payloadData);
-  let url = payloadData.url;
+  let { url } = req.body;
+
+  const { socketid } = req.body;
   // let videoIds = [];
   let videoId = '';
 
@@ -59,7 +59,10 @@ router.post('/', (req, res) => {
   });
 
   YD.on('progress', function (progress) {
-    console.log(JSON.stringify(progress));
+    // let stringifiedProgressData = JSON.stringify(progress);
+    let downloadProgressData = Math.round(progress.progress.percentage);
+    console.log("Progress:   ", downloadProgressData);
+    global.io.to(socketid).emit('progress', downloadProgressData);
   });
   // }
 });
