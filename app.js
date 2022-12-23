@@ -3,19 +3,24 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+const localStorage = require("localStorage");
 var app = express();
 
+const OAuth2Data = require('./credentials.json');
+const { google } = require('googleapis');
+
+const CLIENT_ID = OAuth2Data.web.client_id;
+const CLIENT_SECRET = OAuth2Data.web.client_secret;
+const REDIRECT_URI = OAuth2Data.web.redirect_uris[0];
+
+const OAuth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
+
+const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile';
+
+localStorage.setItem("googleAuthed", "0")
+
 var indexRouter = require('./routes/index');
-// var googleDriveRouter = require('./routes/googledrive');
-
-// require("./googledrive");
-// const scanFolderForFiles = require('./upload');
-
-// let mp3FolderPath = path.join(__dirname, "public", "static", "mp3");
-// console.log("mp3FolderPath:  ", mp3FolderPath);
-// scanFolderForFiles(mp3FolderPath).then(() => {
-//   console.log('🔥 All files have been uploaded to Google Drive successfully!');
-// });
+const upload = require('./upload');
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -28,10 +33,54 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/api/v1/ytdownload', indexRouter);
-// app.use('/api/v1/drive', googleDriveRouter);
 
 app.get('/', (req, res) => {
-  res.render('index');
+  let authed = localStorage.getItem("googleAuthed");
+  console.log("authed:  ", authed);
+  if (authed === "0") {
+    console.log('Not Authorised');
+    const url = OAuth2Client.generateAuthUrl({
+      access_type: 'offline',
+      scope: SCOPES,
+    });
+    console.log('url:  ', url);
+    res.render('index', { url: url });
+  } else {
+    res.render('index', { url: '' });
+  }
+});
+
+app.get('/google/callback', (req, res) => {
+  const code = req.query.code;
+  if (code) {
+    OAuth2Client.getToken(code, (err, token) => {
+      if (err) {
+        console.log('Error in Authenticating: ', err);
+      } else {
+        console.log('Successfully Authenticated');
+        console.log(token);
+        OAuth2Client.setCredentials(token);
+
+        localStorage.setItem("googleAuthed", "1")
+
+        res.redirect('/');
+      }
+    });
+  }
+});
+
+app.post('/uploadToDrive', (req, res) => {
+  let mp3FolderPath = path.join(__dirname, 'public', 'static', 'mp3');
+  req.body.title = req.body.title + ".mp3";
+  console.log('mp3FolderPath:  ', mp3FolderPath);
+  let filePath = path.join(mp3FolderPath, "/", req.body.title);
+  console.log("filePath: ", filePath);
+
+  const drive = google.drive({ version: 'v3', auth: OAuth2Client });
+
+  upload.uploadSingleFile(req.body.title, filePath, drive).then(() => {
+    console.log('🔥 All files have been uploaded to Google Drive successfully!');
+  });
 });
 
 // catch 404 and forward to error handler

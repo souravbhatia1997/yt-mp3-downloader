@@ -1,53 +1,47 @@
-  
-  .audio-player {
-    background: white;
-    border: 1px solid #dfdfdf;
-    width: 31vw;
-    text-align: center;
-    display: flex;
-    flex-flow: row;
-    margin: 4rem 0 4rem 0;
-  }
-  .audio-player .album-image {
-    min-height: 140px;
-    width: 130px;
-    background-size: cover;
-  }
-  .audio-player .player-controls {
-    align-items: center;
-    justify-content: center;
-    margin-top: 2.5rem;
-    flex: 3;
-  }
-  .audio-player .player-controls progress {
-    width: 90%;
-  }
-  .audio-player .player-controls progress[value] {
-    -webkit-appearance: none;
-    appearance: none;
-    background-color: white;
-    color: blue;
-    height: 5px;
-  }
-  .audio-player .player-controls progress[value]::-webkit-progress-bar {
-    background-color: white;
-    border-radius: 2px;
-    border: 1px solid #dfdfdf;
-    color: blue;
-  }
-  .audio-player .player-controls progress::-webkit-progress-value {
-    background-color: blue;
-  }
-  .audio-player .player-controls p {
-    font-size: 1.6rem;
-  }
-  .audio-player #play-btn {
-    background-image: url("https://cdn.fastly.picmonkey.com/content4/previews/arrows_2/arrows_2_44_550.png");
-    background-size: cover;
-    width: 75px;
-    height: 75px;
-    margin: 2rem 0 2rem 2rem;
-  }
-  .audio-player #play-btn.pause {
-    background-image: url("https://img.icons8.com/ios/452/circled-pause.png");
-  }
+.audio-player {
+  background: white;
+  border: 1px solid #dfdfdf;
+  width: 31vw;
+  text-align: center;
+  display: flex;
+  flex-flow: row;
+  margin: 4rem 0 4rem 0;
+}
+.audio-player .album-image {
+  min-height: 140px;
+  width: 130px;
+  background-size: cover;
+}
+.audio-player .player-controls {
+  align-items: center;
+  justify-content: center;
+  margin-top: 2.5rem;
+  flex: 3;
+}
+
+.player {
+  position: relative;
+  width: 31vw;
+  background: #f1f3f4;
+  box-shadow: 0 50px 80px rgba(0, 0, 0, 0.25);
+}
+
+.player .imgbx {
+  position: relative;
+  width: 100%;
+  height: 250px;
+}
+
+.player .imgbx img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.player audio {
+  width: 100%;
+  outline: none;
+}

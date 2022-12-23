@@ -14,7 +14,7 @@
     <style type="text/css">
         #banner {
             height: 100vh;
-            background-image: linear-gradient(to right, white 20%, black 100%), url('./static/bg-image.jpg');
+            background-image: linear-gradient(to right, white 20%, black 100%);
             background-blend-mode: color-dodge;
         }
 
@@ -36,52 +36,52 @@
             <div class="jumbotron text-center">
                 <h3>Video YouTube Audio Downloader</h3>
             </div>
-            <div class="row">
-                <div class="col-md-4 offset-md-4">
-                    <!-- <form class = "downloadForm"> -->
-                    <div class="form-group">
-                        <input class="form-control" type="text" name="url" placeholder="Youtube Url" required />
-                    </div>
-                    <div class="form-group text-center">
-                        <!-- <input id="submitBtn" class="btn btn-primary" type="submit" onclick="download(event);" value="Download" /> -->
-                        <input id="submitBtn" class="btn btn-primary" type="submit" value="Download" />
-                    </div>
-                    <div class="progress-bar" id="progress-bar" data-status="0%" aria-label="Progress bar."
-                        style="display: none;"></div>
-
-
-                    <div class="audio-player" id="audio-player" style="display: none;">
-                        <!-- <div id="play-btn"></div> -->
-                        <div class="audio-wrapper" id="player-container" href="javascript:;">
-                            <audio id="player" ontimeupdate="initProgressBar()">
-                                <source src="http://www.lukeduncan.co/oslo.mp3" type="audio/mp3">
-                            </audio>
-                        </div>
-                        <div class="player-controls scrubber">
-                            <p id="mp3Title">Title</p>
-                            <!-- <span id="seekObjContainer">
-                                <progress id="seekObj" value="0" max="1"></progress>
-                            </span>
-                            <br>
-                            <small style="float: left; position: relative; left: 15px;" class="start-time"></small>
-                            <small style="float: right; position: relative; right: 20px;" class="end-time"></small> -->
-
-                        </div>
-                        <div id="album-image" class="album-image"
-                            style="background-image: url('https://artwork-cdn.7static.com/static/img/sleeveart/00/051/614/0005161476_350.jpg')">
-                        </div>
-                    </div>
-
-                    <!-- </form> -->
+            <% if(url) { %>
+                <div class="form-group text-center">
+                    <a href="<%= url%>" class="btn btn-primary">Login</a>
                 </div>
-            </div>
+                <% } else { %>
+                    <div class="row">
+                        <div class="col-md-4 offset-md-4">
+                            <!-- <form class = "downloadForm"> -->
+                            <div class="form-group">
+                                <input class="form-control" type="text" name="url" placeholder="Youtube Url" required />
+                            </div>
+                            <div class="form-group text-center">
+                                <!-- <input id="submitBtn" class="btn btn-primary" type="submit" onclick="download(event);" value="Download" /> -->
+                                <input id="submitBtn" class="btn btn-primary" type="submit" value="Download" />
+                            </div>
+                            <div class="progress-bar" id="progress-bar" data-status="0%" aria-label="Progress bar."
+                                style="display: none;"></div>
+
+                            <div class="player" id="audio-player" style="display: none;">
+                                <div class="imgbx" id="imgbx">
+                                    <img src="https://i.postimg.cc/HsN3YR62/austin-neill-hg-O1w-FPXl3-I-unsplash.jpg">
+                                </div>
+
+                                <div class="player-controls scrubber">
+                                    <p id="mp3Title">Title</p>
+                                </div>
+
+                                <audio id="audio" controls>
+                                    <source id="audioSource">
+                                </audio>
+                                <input id="uploadBtn" class="btn btn-primary" type="submit" value="Upload to Drive" />
+                            </div>
+
+                            <!-- </form> -->
+                        </div>
+                    </div>
+                    <% } %>
         </div>
     </div>
     <script type="text/javascript">
         const progressBar = document.getElementById("progress-bar");
-        const audioEl = document.getElementById("audio-player");
+        const audioPlayerEl = document.getElementById("audio-player");
         const mp3TitleEl = document.getElementById("mp3Title");
         const submitEl = document.getElementById("submitBtn");
+        const imgbxEl = document.getElementById("imgbx");
+        const uploadBtn = document.getElementById("uploadBtn");
 
         const socket = io();
         let socketid = "";
@@ -89,22 +89,30 @@
         socket.on("connect", () => {
             socketid = socket.id
         });
-        socket.on("progress", (downloaded, title, thumbnailUrl, mp3File) => {
-            if (downloaded === 100 && title !== "") {
+
+        socket.on("progress", (downloaded, fileData) => {
+            if (downloaded === 100 && fileData) {
                 progressBar.style.display = "none";
 
-                audioEl.style.display = "block";
+                audioPlayerEl.style.display = "block";
 
-                let playerEl = document.getElementById("player");
-                // let songPath = "/static/mp3/" + title;
-                // console.log("songPath:  ", songPath);
-                playerEl.firstElementChild.setAttribute("src", mp3File);
+                let audioEl = document.getElementById("audio");
+                // audioEl.setAttribute("src", fileData.file);
+                // document.getElementById("audioSource").setAttribute("src", fileData.file);
+                // let fileBaseUrl = "http://localhost:3000\\static\\mp3/";
 
-                mp3TitleEl.innerHTML = title;
+                // let fileBaseUrl = "../static/mp3/";
+                let fileBaseUrl = "../static/mp3/";
+                let encodedVideoTitle = encodeURI(fileData.videoTitle);
+                let fileUrl = fileBaseUrl + encodedVideoTitle + ".mp3";
+                document.getElementById("audioSource").setAttribute("src", fileUrl);
 
-                const albumImageEl = document.getElementById("album-image");
-                console.log("thumbnailUrl:  ", thumbnailUrl);
-                albumImageEl.style.backgroundImage = `url(${thumbnailUrl})`;
+                console.log("fileData.videoTitle:  ", fileData.videoTitle);
+                mp3TitleEl.innerHTML = fileData.videoTitle;
+
+                console.log("thumbnailUrl:  ", fileData.thumbnail);
+                imgbxEl.firstElementChild.setAttribute("src", fileData.thumbnail);
+
 
                 submitEl.disabled = false;
             }
@@ -123,10 +131,11 @@
             let url = $(".form-group .form-control").val();
             console.log("valueee:   =>>>>>>>>>>>>>>>>>>   ", url);
 
+            audioPlayerEl.style.display = "none";
+
             $.ajax({
                 url: "/api/v1/ytdownload",
                 type: 'POST',
-                cache: false,
                 data: { url: url, socketid: socketid },
                 success: function (data) {
                     console.log('Success!')
@@ -135,8 +144,29 @@
                     console.log('err status ' + textStatus + ', err ' + err)
                 }
             })
-            
+
             submitEl.disabled = true;
+        });
+        $("#uploadBtn").click((e) => {
+            e.preventDefault();
+            uploadBtn.disabled = true;
+
+            let title = $("#mp3Title").text();
+            console.log("valueee:   =>>>>>>>>>>>>>>>>>>   ", title);
+
+            $.ajax({
+                url: "/uploadToDrive",
+                type: 'POST',
+                data: { title: title },
+                success: function (data) {
+                    console.log("File Upload API: ", data);
+                    alert("File uploaded to drive successfully");
+                    console.log('Success!')
+                }
+                , error: function (jqXHR, textStatus, err) {
+                    console.log('err status ' + textStatus + ', err ' + err)
+                }
+            })
         });
     </script>
 
